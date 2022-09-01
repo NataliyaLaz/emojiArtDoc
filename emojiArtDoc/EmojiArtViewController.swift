@@ -86,6 +86,7 @@ class EmojiArtViewController: UIViewController, UIDropInteractionDelegate, UIScr
             emojiCollectionView.delegate = self
             emojiCollectionView.dragDelegate = self
             emojiCollectionView.dropDelegate = self
+            emojiCollectionView.dragInteractionEnabled = true
         }
     }
     
