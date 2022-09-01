@@ -132,7 +132,9 @@ class EmojiArtViewController: UIViewController, UIDropInteractionDelegate, UIScr
     
     @IBAction func close(_ sender: UIBarButtonItem) {
         save()
-        document?.close()
+        dismiss(animated: true){
+            self.document?.close()
+        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -145,18 +147,7 @@ class EmojiArtViewController: UIViewController, UIDropInteractionDelegate, UIScr
         }
     }
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        
-        if let url = try? FileManager.default.url(
-            for: .documentDirectory,
-            in: .userDomainMask,
-            appropriateFor: nil,
-            create: true
-        ).appendingPathComponent("Untitled.json") {
-            document = emojiArtDocument(fileURL: url)
-        }
-    }
+    
     
     //MARK: - Zooming inside ScrollView
     
