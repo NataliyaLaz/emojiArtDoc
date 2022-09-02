@@ -49,7 +49,7 @@ class EmojiArtViewController: UIViewController, UIDropInteractionDelegate, UIScr
         }
     }
     
-
+    
     
     @IBOutlet weak var dropZone: UIView!{
         didSet {
@@ -120,7 +120,7 @@ class EmojiArtViewController: UIViewController, UIDropInteractionDelegate, UIScr
     }
     
     
- //MARK: - Documents
+    //MARK: - Documents
     
     var document: emojiArtDocument?
     
@@ -138,6 +138,19 @@ class EmojiArtViewController: UIViewController, UIDropInteractionDelegate, UIScr
         }
         dismiss(animated: true){
             self.document?.close()
+        }
+    }
+    
+    func documentChanged() {
+        // NO CHANGES *INSIDE* THIS METHOD WERE MADE AFTER LECTURE 14
+        // JUST ITS NAME WAS CHANGED (FROM save TO documentChanged)
+        
+        // update the document's Model to match ours
+        document?.emojiArt = emojiArt
+        // then tell the document that something has changed
+        // so it will autosave at next best opportunity
+        if document?.emojiArt != nil {
+            document?.updateChangeCount(.done)
         }
     }
     
@@ -177,6 +190,26 @@ class EmojiArtViewController: UIViewController, UIDropInteractionDelegate, UIScr
         return UIDropProposal(operation: .copy)
     }
     
+    private var suppressBadURLWarnings = false
+    
+    private func presentBadURLWarning(for url: URL?) {
+        if !suppressBadURLWarnings{
+            let alert = UIAlertController(title: "Image Transfer Failed",
+                                          message: "Couldn't transfer the dropped image from it's source.\nShow this warning in the future?",
+                                          preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "Keep Warning",
+                                          style: .default))
+            alert.addAction(UIAlertAction(title: "Stop Warning",
+                                          style: .destructive,
+                                          handler: { action in
+                self.suppressBadURLWarnings = true
+            }))
+            present(alert, animated: true)
+        }
+    }
+    
+    
+    
     
     func dropInteraction(_ interaction: UIDropInteraction,
                          performDrop session: UIDropSession) {
@@ -187,7 +220,20 @@ class EmojiArtViewController: UIViewController, UIDropInteractionDelegate, UIScr
         }
         session.loadObjects(ofClass: NSURL.self) { nsurls in
             if let url = nsurls.first as? URL {
-                self.imageFetcher.fetch(url)
+                // self.imageFetcher.fetch(url)
+                DispatchQueue.global(qos: .userInitiated).async {
+                    if let imageData = try? Data(contentsOf: url.imageURL), let image = UIImage(data: imageData) {
+                        DispatchQueue.main.async {
+                            // successfully fetched the image!
+                            self.emojiArtBackgroundImage = (url, image)
+                            self.documentChanged()
+                        }
+                    } else {
+                        DispatchQueue.main.async {
+                            self.presentBadURLWarning(for: url)
+                        } 
+                    }
+                }
             }
         }
         session.loadObjects(ofClass: UIImage.self) { images in
