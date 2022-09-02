@@ -20,7 +20,8 @@ extension EmojiArt.EmojiInfo {
     }
 }
 
-class EmojiArtViewController: UIViewController, UIDropInteractionDelegate, UIScrollViewDelegate, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UICollectionViewDragDelegate, UICollectionViewDropDelegate {
+class EmojiArtViewController: UIViewController, UIDropInteractionDelegate, UIScrollViewDelegate, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UICollectionViewDragDelegate, UICollectionViewDropDelegate{
+    
     
     //MARK: - Model
     
@@ -56,8 +57,20 @@ class EmojiArtViewController: UIViewController, UIDropInteractionDelegate, UIScr
             dropZone.addInteraction(UIDropInteraction(delegate: self))
         }
     }
+    lazy var emojiArtView = EmojiArtView()
     
-    var emojiArtView = EmojiArtView()
+//    lazy var emojiArtView:EmojiArtView = {
+//        let eav = EmojiArtView()
+//        eav.delegate = self
+//        return eav
+//    }()
+    
+    
+//    //MARK: EmojiArtViewDelegate
+//
+//    func emojiArtViewDidChange(_ sender: EmojiArtView) {
+//        documentChanged()
+//    }
     
     var emojis = "😀🎁✈️🎱🍎🐶🐝☕️🎼🚲♣️👨‍🎓✏️🌈🤡🎓👻☎️".map { String($0) }
     
@@ -67,6 +80,7 @@ class EmojiArtViewController: UIViewController, UIDropInteractionDelegate, UIScr
             scrollView.maximumZoomScale = 5.0
             scrollView.delegate = self
             scrollView.addSubview(emojiArtView)
+        
         }
     }
     
@@ -132,18 +146,23 @@ class EmojiArtViewController: UIViewController, UIDropInteractionDelegate, UIScr
     }
     
     @IBAction func close(_ sender: UIBarButtonItem) {
-        save()
+        if let observer = emojiArtViewObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        //save()
         if document?.emojiArt != nil {
             document?.thumbnail = emojiArtView.snapshot
         }
         dismiss(animated: true){
-            self.document?.close()
+            self.document?.close { success in
+                if let observer = self.documentObserver {
+                    NotificationCenter.default.removeObserver(observer)
+                }
+            }
         }
     }
     
     func documentChanged() {
-        // NO CHANGES *INSIDE* THIS METHOD WERE MADE AFTER LECTURE 14
-        // JUST ITS NAME WAS CHANGED (FROM save TO documentChanged)
         
         // update the document's Model to match ours
         document?.emojiArt = emojiArt
@@ -154,17 +173,32 @@ class EmojiArtViewController: UIViewController, UIDropInteractionDelegate, UIScr
         }
     }
     
+    private var documentObserver: NSObjectProtocol?
+    private var emojiArtViewObserver: NSObjectProtocol?
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        documentObserver = NotificationCenter.default.addObserver(
+            forName: UIDocument.stateChangedNotification,
+            object: document,
+            queue: OperationQueue.main,
+            using: { notification in
+                print("documentState changed to \(self.document?.documentState)")
+            })
         document?.open { success in
             if success {
                 self.title = self.document?.localizedName
                 self.emojiArt = self.document?.emojiArt
+                self.emojiArtViewObserver = NotificationCenter.default.addObserver(
+                    forName: .EmojiArtViewDidChange,
+                    object: self.emojiArtView,
+                    queue: OperationQueue.main,
+                    using: { notificaation in
+                        self.documentChanged()
+                    })
             }
         }
     }
-    
-    
     
     //MARK: - Zooming inside ScrollView
     
@@ -231,7 +265,7 @@ class EmojiArtViewController: UIViewController, UIDropInteractionDelegate, UIScr
                     } else {
                         DispatchQueue.main.async {
                             self.presentBadURLWarning(for: url)
-                        } 
+                        }
                     }
                 }
             }
