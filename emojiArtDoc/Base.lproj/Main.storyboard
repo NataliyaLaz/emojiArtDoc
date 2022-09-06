@@ -217,9 +217,15 @@
                                     <segue destination="rde-1E-YbV" kind="presentation" identifier="Show Document Info" modalPresentationStyle="formSheet" id="8Q2-F4-9hF"/>
                                 </connections>
                             </barButtonItem>
+                            <barButtonItem systemItem="camera" id="2cX-lO-fip">
+                                <connections>
+                                    <action selector="takeBackgroundPhoto:" destination="CpX-GS-OkH" id="4k3-aL-g8a"/>
+                                </connections>
+                            </barButtonItem>
                         </rightBarButtonItems>
                     </navigationItem>
                     <connections>
+                        <outlet property="cameraButton" destination="2cX-lO-fip" id="rj8-KL-9kR"/>
                         <outlet property="dropZone" destination="D9l-Cb-1VO" id="QSd-y4-iRO"/>
                         <outlet property="embeddedDocInfoHeight" destination="0xR-Ht-mnC" id="blx-Cb-YRR"/>
                         <outlet property="embeddedDocInfoWidth" destination="awz-bh-Gsr" id="S18-jp-B9q"/>
@@ -402,6 +408,7 @@
                                 </constraints>
                             </stackView>
                         </subviews>
+                        <viewLayoutGuide key="safeArea" id="eZZ-wB-A0M"/>
                         <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                     </view>
                     <connections>
